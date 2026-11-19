@@ -282,11 +282,17 @@ const AVA={elderly_man:face({hs:"gray",ex:"sick",acc:GL}),elderly_woman:face({sk
  boy:face({hs:"child",hair:"#3a2a22",ex:"sad"}),girl:face({skin:"light",hs:"long",hair:"#6b4423",ex:"sad"}),deep_man:face({skin:"deep",hair:"#111"}),deep_woman:face({skin:"deep",hs:"long",hair:"#111",ex:"sick"})};
 
 /* ===================== STATE (saved on this device) ===================== */
-const KEY="abusamn_hub_v2";
+const KEY="abusamn_hub_v3";
 function blank(){return{quiz:{},wrong:{},cards:{},hl:{},tab:{}}}
 let S=blank();
-try{const raw=localStorage.getItem(KEY); if(raw) S=Object.assign(blank(),JSON.parse(raw)); else migrate();}catch(e){}
+try{const raw=localStorage.getItem(KEY); if(raw) S=Object.assign(blank(),JSON.parse(raw)); else {migrateV2(); if(!Object.keys(S.quiz).length) migrate();}}catch(e){}
 function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+function migrateV2(){ // the previous hub version (same day) stored progress under abusamn_hub_v2; AKI questions/cards match 1:1
+ try{const o=JSON.parse(localStorage.getItem("abusamn_hub_v2")||"null"); if(!o) return;
+  Object.entries(o.hist||{}).forEach(([k,h])=>{const [l,i]=k.split("_"); if(l!=="aki"||!LEC.aki.quiz[+i]) return; (S.quiz.aki=S.quiz.aki||{})[+i]=h.last; if(h.last!==LEC.aki.quiz[+i].a) S.wrong["aki:"+i]=1;});
+  Object.entries(o.cards||{}).forEach(([k,v])=>{const m=k.match(/^aki_c(\d+)$/); if(m&&LEC.aki.cards[+m[1]]) (S.cards.aki=S.cards.aki||{})[+m[1]]=v;}); save();
+ }catch(e){}
+}
 function migrate(){ // bring over answers from the first version of the hub
  try{const old=JSON.parse(localStorage.getItem("abusamn_osce_v1")||"null"); if(!old||!old.ans) return;
   Object.entries(old.ans).forEach(([k,c])=>{const [l,i]=k.split("_"); let ni=+i; if(l==="gn") ni+=1; const L=LEC[l]; if(!L||!L.quiz[ni]) return;
@@ -386,6 +392,7 @@ function guideHTML(L){
   if(t.table) b+=`<div class="blk" data-hk="${hk("table")}"><div class="tbl"><table>${t.table.map((r,ri)=>`<tr>${r.map(c=>ri?`<td>${esc(c)}</td>`:`<th>${esc(c)}</th>`).join("")}</tr>`).join("")}</table></div>${t.tableTag?tagify(t.tableTag):""}</div>`;
   if(t.imgs&&t.imgs.length) b+=`<div class="blk"><h5>🖼️ Lecture images</h5><div class="imgs">${t.imgs.map(k=>`<figure class="limg" data-zoom="${k}"><img src="${IMG[k]}" alt="${esc(IMGCAP[k])}" loading="lazy"><figcaption>${esc(IMGCAP[k])}</figcaption></figure>`).join("")}</div></div>`;
   const refOnly=["hx","exam","inv","mgmt","ddx","red"].every(k=>!(t[k]||[]).length);
+  if(t.imgSlots) b+=`<div class="blk"><h5>🖼️ Lecture images</h5><ul>${t.imgSlots.map(x=>`<li class="nc">Picture slot ${esc(x)} — image not available (could not be extracted)</li>`).join("")}</ul></div>`;
   SECTIONS.forEach(([k,n,ic])=>{const a=t[k]; if(!a) return; if(!a.length){ if(t.table||refOnly) return; b+=`<div class="blk${k==="red"?" red":""}"><h5>${ic} ${n}</h5><ul><li class="nc">Not covered in sources</li></ul></div>`; return;}
    const tagL=k==="mgmt"?"ol":"ul"; b+=`<div class="blk${k==="red"?" red":""}" data-hk="${hk(k)}"><h5>${ic} ${n}</h5><${tagL}>${a.map(bullet).join("")}</${tagL}></div>`});
   b+=`<div class="blk"><h5>🎓 Examiner's questions</h5>${t.eq&&t.eq.length?t.eq.map(([q,a])=>`<details class="eq"><summary>${rich(q)}</summary><div class="ans">${rich(a)}</div></details>`).join(""):'<ul><li class="nc">Not covered in sources</li></ul>'}</div>`;
@@ -395,14 +402,14 @@ function guideHTML(L){
  });
  h+=`<div class="sec-h">Additional information</div>${(L.additional||[]).map((a,i)=>`<div class="addl" data-hk="${L.id}|add|${i}"><h4>${esc(a.t)}</h4>${tagify(a.html)}</div>`).join("")}`;
  h+=`<div class="sec-h">How to take the history</div><div class="addl" data-hk="${L.id}|hist"><h4>Framework from Internal History.pdf <span class="tag H">H</span></h4><ul>
-  <li>Patient profile: name, age, address, marital status, occupation, date and route of admission (ER/OPC) [H]</li>
-  <li>Chief complaint in the patient's own words + duration before admission [H]</li>
-  <li>HPI: site, onset (sudden/gradual), character, radiation, associated symptoms, timing (course, pattern), exacerbating/relieving factors, severity, first time? [H]</li>
-  <li>Systemic review (past month): general, CVS &amp; RS, GI, blood, throat, ears, nervous system, eyes, muscle/joints/bones, skin, urinary, reproductive [H]</li>
-  <li>Past medical &amp; surgical history: chronic illnesses, previous attendance, operations (date, complications), blood transfusion, trauma [H]</li>
-  <li>Drug history: name, dose, frequency, adherence, side effects; drug allergies; non-prescribed drugs [H]</li>
-  <li>Family history: inherited illnesses, which members [H]</li>
-  <li>Social: smoking (pack-years = cigarettes/day × years ÷ 20), travel, chemicals, pets, sick contacts, mental health [H]</li></ul></div>`;
+  <li>Patient profile: name, age, address, marital status, occupation, date and route of admission (ER/OPC) [H p1]</li>
+  <li>Chief complaint in the patient's own words + duration before admission [H p1]</li>
+  <li>HPI: site, onset (sudden/gradual), character, radiation, associated symptoms, timing (course, pattern), exacerbating/relieving factors, severity, first time? [H p1]</li>
+  <li>Systemic review (past month): general, CVS &amp; RS, GI, blood, throat, ears, nervous system, eyes, muscle/joints/bones, skin, urinary, reproductive [H p1–2]</li>
+  <li>Past medical &amp; surgical history: chronic illnesses, previous attendance, operations (date, complications), blood transfusion, trauma [H p2]</li>
+  <li>Drug history: name, dose, frequency, adherence, side effects; drug allergies; non-prescribed drugs [H p2]</li>
+  <li>Family history: inherited illnesses, which members [H p2]</li>
+  <li>Social: smoking (pack-years = cigarettes/day × years ÷ 20), travel, chemicals, pets, sick contacts, mental health [H p2]</li></ul></div>`;
  return tagify(h);
 }
 app.addEventListener("click",e=>{
