@@ -30,8 +30,9 @@ Status key: ✅ built in hub · ⏳ coming soon
 | Hematology | 1 | Hematology | ⏳ | | | | | |
 | Rheumatology | 1 | Rheumatology | ⏳ | | | | | |
 
-Sources: Abu Samn lecture PDFs [L], Internal History.pdf [H]. Kumar & Clark PDFs [K] could not be read (each >10 MB connector limit), so no [K] pearls or corrections yet.
+Sources: Abu Samn lecture PDFs [L], Internal History.pdf [H], Kumar & Clark 10th ed. [K] (Ch 9, 21, 31, 36 used so far).
 
 ## Change log
 - 2026-11-19 — Hub v2: home with 7 system cards, system pages, lecture pages (Study Guide / Quiz / Flashcards), search, mixed quiz, wrong-answer review, "Again" deck. Upgraded Hypertension, AKI & CKD, GNs, Electrolytes. Previous quiz answers migrate automatically.
 - 2026-11-19 — Merged with a parallel hub version: adopted its AKI & CKD content (page-tagged from the PDF) and extra quiz questions; saved AKI progress carries over.
+- 2026-11-19 — Added Kumar & Clark pearls (57) and ⚠ Corrections (12) to Hypertension, AKI & CKD, GNs, Electrolytes.

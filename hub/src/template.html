@@ -110,6 +110,8 @@ details.topic>summary .imgflag{margin-left:auto;font-size:.74rem;color:var(--acc
 .blk.chk h5{color:var(--warn)}
 .blk ul,.blk ol{margin:0;padding-left:20px}
 .blk li{margin:3px 0;max-width:72ch}
+.blk.corr h5{color:var(--bad)}
+.blk.corr{background:rgba(248,113,113,.07);border:1px solid rgba(248,113,113,.35);border-radius:10px;padding:8px 12px;margin-top:6px}
 .blk.chk{background:rgba(251,191,36,.07);border:1px solid rgba(251,191,36,.3);border-radius:10px;padding:8px 12px;margin-top:6px}
 .nc{color:var(--dim);font-style:italic}
 .eq{background:var(--bg2);border:1px solid var(--line);border-radius:10px;margin:6px 0;overflow:hidden}
@@ -351,8 +353,8 @@ function home(){
   <button class="tool" data-go="again">🔁<span><b>"Again" deck</b><small>Cards you marked Again</small></span><span class="n">${againList().length}</span></button>
  </div>
  <div class="sec-h">Source tags</div>
- <div class="legend"><span class="tag L">L p3</span> Abu Samn lecture, page <span class="tag K">K</span> Kumar &amp; Clark <span class="tag H">H</span> Internal History.pdf <span class="tag W">⚠</span> Source check</div>
- <div class="note"><b>About Kumar &amp; Clark:</b> the three Kumar PDFs in your Drive are each over the 10 MB limit of the Drive connector and returned no text, so no [K] pearls or corrections were added. Where the lecture contradicts itself or looks like a typo, a ⚠ Source check box says so. Nothing was filled in from outside your sources.</div>
+ <div class="legend"><span class="tag L">L p3</span> Abu Samn lecture, page <span class="tag K">K</span> Kumar &amp; Clark <span class="tag H">H</span> Internal History.pdf <span class="tag W">⚠</span> Correction / source check</div>
+ <div class="note"><b>About Kumar &amp; Clark:</b> pearls and ⚠ Corrections come from Kumar &amp; Clark's Clinical Medicine, 10th edition (Ch 9 fluids &amp; electrolytes, Ch 21 calcium, Ch 31 hypertension, Ch 36 kidney). Where Kumar disagrees with the lecture, both are shown and the current one is named. The lecture is still what you are examined on.</div>
  </div>`;
 }
 
@@ -396,8 +398,9 @@ function guideHTML(L){
   SECTIONS.forEach(([k,n,ic])=>{const a=t[k]; if(!a) return; if(!a.length){ if(t.table||refOnly) return; b+=`<div class="blk${k==="red"?" red":""}"><h5>${ic} ${n}</h5><ul><li class="nc">Not covered in sources</li></ul></div>`; return;}
    const tagL=k==="mgmt"?"ol":"ul"; b+=`<div class="blk${k==="red"?" red":""}" data-hk="${hk(k)}"><h5>${ic} ${n}</h5><${tagL}>${a.map(bullet).join("")}</${tagL}></div>`});
   b+=`<div class="blk"><h5>🎓 Examiner's questions</h5>${t.eq&&t.eq.length?t.eq.map(([q,a])=>`<details class="eq"><summary>${rich(q)}</summary><div class="ans">${rich(a)}</div></details>`).join(""):'<ul><li class="nc">Not covered in sources</li></ul>'}</div>`;
-  b+=`<div class="blk pearl"><h5>💎 Pearls <span class="tag K">K</span></h5><ul><li class="nc">Not covered in sources (Kumar PDFs could not be opened)</li></ul></div>`;
-  if(t.check) b+=`<div class="blk chk"><h5>⚠ Source check</h5><ul>${t.check.map(bullet).join("")}</ul></div>`;
+  b+=`<div class="blk pearl" data-hk="${hk("pearl")}"><h5>💎 Pearls <span class="tag K">K</span></h5><ul>${t.pearls&&t.pearls.length?t.pearls.map(bullet).join(""):'<li class="nc">Not covered in sources</li>'}</ul></div>`;
+  if(t.corr&&t.corr.length) b+=`<div class="blk corr" data-hk="${hk("corr")}"><h5>⚠ Correction (lecture vs Kumar)</h5><ul>${t.corr.map(bullet).join("")}</ul></div>`;
+  if(t.check&&t.check.length) b+=`<div class="blk chk"><h5>⚠ Source check</h5><ul>${t.check.map(bullet).join("")}</ul></div>`;
   h+=`<details class="topic" id="t-${t.id}"><summary><span class="chev">▸</span><span class="tn">${ti+1}</span><span>${esc(t.t)}</span>${t.imgs&&t.imgs.length?`<span class="imgflag">🖼️ ${t.imgs.length}</span>`:""}</summary><div class="tbody">${b}</div></details>`;
  });
  h+=`<div class="sec-h">Additional information</div>${(L.additional||[]).map((a,i)=>`<div class="addl" data-hk="${L.id}|add|${i}"><h4>${esc(a.t)}</h4>${tagify(a.html)}</div>`).join("")}`;
@@ -472,7 +475,7 @@ function qHTML(l,i,n,tot,chosen,showLec){
  const q=LEC[l].quiz[i], done=chosen!==undefined;
  const opts=q.opts.map((o,oi)=>{let c="opt";if(done){if(oi===q.a)c+=" ok";else if(oi===chosen)c+=" no"}return `<button class="${c}" data-a="${l}:${i}:${oi}"${done?" disabled":""}><span class="k">${"ABCDE"[oi]}</span><span>${esc(o)}</span></button>`}).join("");
  const img=q.img?`<figure class="limg" data-zoom="${q.img}" style="margin-top:12px"><img src="${IMG[q.img]}" alt="${esc(IMGCAP[q.img])}" loading="lazy"><figcaption>Image: ${esc(q.imgCap||IMGCAP[q.img])}</figcaption></figure>`:"";
- const fb=done?`<div class="fb"><div class="v ${chosen===q.a?"ok":"no"}">${chosen===q.a?"✓ Correct":"✗ Not quite — answer: "+"ABCDE"[q.a]}</div><div class="b">${esc(q.exp)} ${tagify(q.tag)}</div></div>`:"";
+ const fb=done?`<div class="fb"><div class="v ${chosen===q.a?"ok":"no"}">${chosen===q.a?"✓ Correct":"✗ Not quite — answer: "+"ABCDE"[q.a]}</div><div class="b">${esc(q.exp)} ${tagify(q.tag)}${q.kn?`<div style="margin-top:8px;color:var(--warn)">${rich(q.kn)}</div>`:""}</div></div>`:"";
  return `<article class="qcard"><div class="qmeta"><span class="qtype">${esc(q.type)}</span>${showLec?`<span class="qtype" style="color:var(--muted)">${esc(LEC[l].title)}</span>`:""}<span class="qnum">${n+1} / ${tot}</span></div>
  <div class="qhead"><div class="ava">${AVA[q.char]||AVA.man}</div><div class="bubble"><span class="cc">${esc(q.cc)}</span>${esc(q.v)}</div></div>${img}
  <div class="qtext">${esc(q.q)}</div><div class="opts">${opts}</div>${fb}</article>`;
@@ -514,7 +517,7 @@ function searchPage(){
 }
 let IDX=null;
 function buildIdx(){IDX=[];Object.values(LEC).forEach(L=>{
- L.topics.forEach(t=>{const parts=[];["def","hx","exam","inv","mgmt","ddx","red","check"].forEach(k=>(t[k]||[]).forEach(x=>parts.push(x)));(t.eq||[]).forEach(([q,a])=>parts.push(q+" "+a));(t.table||[]).forEach(r=>parts.push(r.join(" ")));
+ L.topics.forEach(t=>{const parts=[];["def","hx","exam","inv","mgmt","ddx","red","check","pearls","corr"].forEach(k=>(t[k]||[]).forEach(x=>parts.push(x)));(t.eq||[]).forEach(([q,a])=>parts.push(q+" "+a));(t.table||[]).forEach(r=>parts.push(r.join(" ")));
   IDX.push({kind:"Topic",lec:L.id,title:t.t,text:parts.join(" · "),go:"lec-"+L.id+"-guide",jump:t.id})});
  L.cards.forEach(c=>IDX.push({kind:"Card",lec:L.id,title:c[0],text:c[1],go:"lec-"+L.id+"-cards"}));
  L.quiz.forEach(q=>IDX.push({kind:"Question",lec:L.id,title:q.q,text:q.v+" "+q.opts.join(" ")+" "+q.exp,go:"lec-"+L.id+"-quiz"}));
